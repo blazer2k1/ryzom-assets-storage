@@ -1,0 +1,32 @@
+name: Mirror Ryzom 7z to Release
+on:
+  workflow_dispatch:
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download 7z from Ryzom CDN
+        run: |
+          curl -L --fail --retry 3 -o ryzomcore_graphics.7z \
+            "https://cdn.ryzom.dev/pub/assets/ryzomcore_graphics-rev5.7z"
+          ls -lh ryzomcore_graphics.7z
+
+      - name: Split into 1.5GB chunks (for 2GB release asset limit)
+        run: |
+          split -b 1500M ryzomcore_graphics.7z ryzomcore_part_
+          ls -lh ryzomcore_part_*
+
+      - name: Create release and upload parts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create v1.0 \
+            --title "Ryzom Graphics Assets" \
+            --notes "Mirrored 7z from cdn.ryzom.dev" \
+            ryzomcore_part_*
