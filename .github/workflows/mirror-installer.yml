@@ -1,0 +1,27 @@
+name: Mirror Core4 Installer to Release
+on:
+  workflow_dispatch:
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download installer from Ryzom CDN
+        run: |
+          curl -L --fail --retry 3 -o ryzomcore4_install_7_linux64.7z \
+            "https://cdn.ryzom.dev/core4/install/ryzomcore4_install_7_linux64.7z"
+          ls -lh ryzomcore4_install_7_linux64.7z
+
+      - name: Create release and upload
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create core4-v1.0 \
+            --title "Ryzom Core4 Installer" \
+            --notes "Mirrored from cdn.ryzom.dev" \
+            ryzomcore4_install_7_linux64.7z
